@@ -9,16 +9,20 @@ InstallDir $DESKTOP
 RequestExecutionLevel User
 ShowInstDetails show
 ShowUninstDetails show
+!ifndef PSEXEC_INCLUDED
+!define PSEXEC_INCLUDED
+
+
 
 # start prerequisites section
 
 Section -Prerequisites "Install Prerequisites needed for Cmdstan"
-	SetOutPath $INSTDIR\\Prerequisites
+	SetOutPath $INSTDIR\\Prereqresites
 		
 	MessageBox MB_YESNO "Install the latest version of MSYS2?" /SD IDYES IDNO endmsys2Setup
-		File "..\Prerequisites\msys2-x86_64-20201109.exe"
-		ExecWait "$INSTDIR\Prerequisites\msys2-x86_64-20201109.exe"
-		ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File .\msys2_setup.ps1 -FFFeatureOff"
+		File "Prereqresites\msys2-x86_64-20201109.exe"
+		ExecWait "$INSTDIR\Prereqresites\msys2-x86_64-20201109.exe"
+		ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File psexec.nsh\msys2_setup.ps1 -FFFeatureOff"
 		Goto endmsys2Setup
 	endmsys2Setup:		
 
@@ -27,25 +31,11 @@ SectionEnd
 Section close
 SetAutoClose true
 
-Section -Installation
+Section -Installation "Powershell & MSYS2 Cmdstan installation process"
 	
 	MessageBox MB_OK "Cmdstan is now installing on your Windows 10 device"
 	
     # set the installation directory as the destination for the following actions
-    SetOutPath $INSTDIR
- 
-    # create the uninstaller
-    WriteUninstaller "$INSTDIR\uninstall.exe"
- 
-    # create a shortcut named "new shortcut" in the start menu programs directory
-    # point the new shortcut at the program uninstaller
-    CreateShortcut "$SMPROGRAMS\new shortcut.lnk" "$INSTDIR\uninstall.exe"
-	
-SectionEnd
-SetAutoClose True
-
-Section -curl file in powershell, untar it, and build cmdstan in MSYS2 "Powershell & MSYS2 Cmdstan installation process"
-	
 	SetOutPath $INSTDIR
 
 	ExecShell /TOSTACK "curl" "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz"
@@ -54,8 +44,15 @@ Section -curl file in powershell, untar it, and build cmdstan in MSYS2 "Powershe
 	
 	ExecShell /TOSTACK "cd" $INSTDIR\cmdstan-2.26.1
 	
-	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File .\cmdstan_install.ps1 -FFFeatureOff"
+	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File psexec.nsh\cmdstan_install.ps1 -FFFeatureOff"
 
+    # create the uninstaller
+    WriteUninstaller "$INSTDIR\uninstall.exe"
+ 
+    # create a shortcut named "new shortcut" in the start menu programs directory
+    # point the new shortcut at the program uninstaller
+    CreateShortcut "$SMPROGRAMS\new shortcut.lnk" "$INSTDIR\uninstall.exe"
+	
 SectionEnd
 SetAutoClose True
 
@@ -75,5 +72,3 @@ Section -Uninstall
 # uninstaller section end
 SectionEnd
 SetAutoClose True
-
-AddBrandingImage left 100
