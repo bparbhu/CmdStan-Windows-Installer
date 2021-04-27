@@ -22,7 +22,7 @@ Section -Prerequisites "Install Prerequisites needed for Cmdstan"
 	MessageBox MB_YESNO "Install the latest version of MSYS2?" /SD IDYES IDNO endmsys2Setup
 		File "Prereqresites\msys2-x86_64-20201109.exe"
 		ExecWait "$INSTDIR\Prereqresites\msys2-x86_64-20201109.exe"
-		ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File psexec.nsh\msys2_setup.ps1 -FFFeatureOff"
+		ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File powershell_scripts\msys2_setup.ps1 -FFFeatureOff"
 		Goto endmsys2Setup
 	endmsys2Setup:		
 
@@ -44,7 +44,7 @@ Section -Installation "Powershell & MSYS2 Cmdstan installation process"
 	
 	ExecShell /TOSTACK "cd" $INSTDIR\cmdstan-2.26.1
 	
-	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File psexec.nsh\cmdstan_install.ps1 -FFFeatureOff"
+	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File powershell_scripts\cmdstan_install.ps1 -FFFeatureOff"
 
     # create the uninstaller
     WriteUninstaller "$INSTDIR\uninstall.exe"
