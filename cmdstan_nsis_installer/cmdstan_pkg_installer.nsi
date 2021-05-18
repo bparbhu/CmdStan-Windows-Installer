@@ -28,6 +28,29 @@ Section -Prerequisites "Install Prerequisites needed for Cmdstan"
 
 SectionEnd
 
+Target x86-unicode
+;Target x86-ansi
+
+!AddPluginDir /x86-unicode   "NScurl\x86-unicode"
+!AddPluginDir /x86-ansi      "NScurl\x86-ansi"
+
+!include "MUI2.nsh"
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_LANGUAGE "English"
+
+Name NScurl-Test
+ShowInstDetails show
+
+Section Download
+  DetailPrint 'Downloading...'
+  NScurl::http get "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz" "$INSTDR\cmdstan-2.26.1.tar.gz" /CANCEL /INSIST /Zone.Identifier /END
+  Pop $0
+  DetailPrint "Status: $0"
+SectionEnd
+
+
 Section close
 SetAutoClose true
 
@@ -37,12 +60,10 @@ Section -Installation "Powershell & MSYS2 Cmdstan installation process"
 	
     # set the installation directory as the destination for the following actions
 	SetOutPath $INSTDIR
-
-	ExecShell /TOSTACK "curl" "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz"
+		
+	untgz::extract "-x""-f" $INSTDIR\cmdstan-2.26.1.tar.gz
 	
-	ExecShell /TOSTACK "tar -xf" $INSTDIR\cmdstan-2.26.1.tar.gz
-	
-	ExecShell /TOSTACK "cd" $INSTDIR\cmdstan-2.26.1
+	ExecDos::exec /TOSTACK "cd" $INSTDIR\cmdstan-2.26.1
 	
 	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File powershell_scripts\cmdstan_install.ps1 -FFFeatureOff"
 
