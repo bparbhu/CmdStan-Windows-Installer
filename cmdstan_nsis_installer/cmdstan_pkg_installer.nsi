@@ -28,7 +28,7 @@ Section -Prerequisites "Install Prerequisites needed for Cmdstan"
 
 SectionEnd
 
-Target x86-unicode
+;Target x86-unicode
 ;Target x86-ansi
 
 !AddPluginDir /x86-unicode   "NScurl\x86-unicode"
