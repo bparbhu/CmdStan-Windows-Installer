@@ -31,8 +31,8 @@ SectionEnd
 ;Target x86-unicode
 ;Target x86-ansi
 
-!AddPluginDir /x86-unicode   "NScurl\x86-unicode"
-!AddPluginDir /x86-ansi      "NScurl\x86-ansi"
+!AddPluginDir /x86-unicode   "NScurl-1.2021.2.14\x86-unicode"
+!AddPluginDir /x86-ansi      "NScurl-1.2021.2.14\x86-ansi"
 
 !include "MUI2.nsh"
 !insertmacro MUI_PAGE_WELCOME
@@ -46,7 +46,7 @@ ShowInstDetails show
 Section -Download
   
   DetailPrint 'Downloading CmdStan...'
-  NScurl::http get "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz" "$INSTDR\cmdstan-2.26.1.tar.gz" /CANCEL /INSIST /Zone.Identifier /END
+  NScurl::http get "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz" "$TEMP\cmdstan-2.26.1.tar.gz" /CANCEL /INSIST /Zone.Identifier /END
   Pop $0
   DetailPrint "Status: $0"
 
@@ -56,24 +56,28 @@ Section close
 SetAutoClose true
 
 Section -Installation "Powershell & MSYS2 Cmdstan installation process"
-	
-	MessageBox MB_OK "Cmdstan is now being installed on your Windows 10 device"
-	
-    # set the installation directory as the destination for the following actions
-	SetOutPath $INSTDIR
+		
+	# set the installation directory as the destination for the following actions
+	;SetOutPath $INSTDIR
+	untgz::extract "-x" "-f" "$INSTDIR" "$TEMP\cmdstan-2.26.1.tar.gz"
+	StrCmp $R0 "success" +4
+		DetailPrint "  Failed to extract ${DICT_FILENAME}"
+		MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "  Failed to extract $cmdstan-2.26.1"
+		Abort
+	 
+	; Delete temporary files
+	Delete "$TEMP\$cmdstan-2.26.1.tar.gz"
 
-	untgz::extract "-x""-f" $INSTDIR\cmdstan-2.26.1.tar.gz
-	
 	!cd $INSTDIR\cmdstan-2.26.1
-	
+
 	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File powershell_scripts\cmdstan_install.ps1 -FFFeatureOff"
 
-    # create the uninstaller
-    WriteUninstaller "$INSTDIR\uninstall.exe"
- 
-    # create a shortcut named "new shortcut" in the start menu programs directory
-    # point the new shortcut at the program uninstaller
-    CreateShortcut "$SMPROGRAMS\new shortcut.lnk" "$INSTDIR\uninstall.exe"
+	# create the uninstaller
+	WriteUninstaller "$INSTDIR\uninstall.exe"
+
+	# create a shortcut named "new shortcut" in the start menu programs directory
+	# point the new shortcut at the program uninstaller
+	CreateShortcut "$SMPROGRAMS\new shortcut.lnk" "$INSTDIR\uninstall.exe"
 	
 SectionEnd
 SetAutoClose True
