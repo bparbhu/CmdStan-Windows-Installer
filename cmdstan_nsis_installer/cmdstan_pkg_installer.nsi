@@ -43,27 +43,28 @@ Target x86-unicode
 Name NScurl-Test
 ShowInstDetails show
 
-Section Download
-  DetailPrint 'Downloading...'
+Section -Download
+  
+  DetailPrint 'Downloading CmdStan...'
   NScurl::http get "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz" "$INSTDR\cmdstan-2.26.1.tar.gz" /CANCEL /INSIST /Zone.Identifier /END
   Pop $0
   DetailPrint "Status: $0"
-SectionEnd
 
+SectionEnd
 
 Section close
 SetAutoClose true
 
 Section -Installation "Powershell & MSYS2 Cmdstan installation process"
 	
-	MessageBox MB_OK "Cmdstan is now installing on your Windows 10 device"
+	MessageBox MB_OK "Cmdstan is now being installed on your Windows 10 device"
 	
     # set the installation directory as the destination for the following actions
 	SetOutPath $INSTDIR
-		
+
 	untgz::extract "-x""-f" $INSTDIR\cmdstan-2.26.1.tar.gz
 	
-	ExecDos::exec /TOSTACK "cd" $INSTDIR\cmdstan-2.26.1
+	!cd $INSTDIR\cmdstan-2.26.1
 	
 	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File powershell_scripts\cmdstan_install.ps1 -FFFeatureOff"
 
