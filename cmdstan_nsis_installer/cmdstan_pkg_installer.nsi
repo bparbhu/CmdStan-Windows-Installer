@@ -33,6 +33,7 @@ SectionEnd
 
 !AddPluginDir /x86-unicode   "NScurl-1.2021.2.14\x86-unicode"
 !AddPluginDir /x86-ansi      "NScurl-1.2021.2.14\x86-ansi"
+;!AddPluginDir /unicode "untgz/unicode"
 
 !include "MUI2.nsh"
 !insertmacro MUI_PAGE_WELCOME
@@ -58,7 +59,7 @@ SetAutoClose true
 Section -Installation "Powershell & MSYS2 Cmdstan installation process"
 		
 	# set the installation directory as the destination for the following actions
-	;SetOutPath $INSTDIR
+	SetOutPath $INSTDIR
 	untgz::extract "-x" "-f" "$INSTDIR" "$TEMP\cmdstan-2.26.1.tar.gz"
 	StrCmp $R0 "success" +4
 		DetailPrint "  Failed to extract ${DICT_FILENAME}"
