@@ -35,13 +35,6 @@ Section "CmdStan" SecCmdStan
 
   SetOutPath $INSTDIR
 
-  ; Extract MinGW-w64
-  File /r "path\to\mingw-w64\*.*"
-
-  ; Set environment variables for MinGW-w64
-  StrCpy $2 $INSTDIR\mingw-w64\bin
-  System::Call 'Kernel32::SetEnvironmentVariable(t "PATH", t "$2")'
-
   ; Download and extract CmdStan release from GitHub
   StrCpy $0 "https://github.com/stan-dev/cmdstan/releases/download/v2.31.0"
   StrCpy $1 "cmdstan-2.31.0.tar.gz"
@@ -59,13 +52,13 @@ Section "CmdStan" SecCmdStan
 
   ; Run make commands
   DetailPrint "Running make clean-all"
-  ExecWait '"$2\make" clean-all'
+  ExecWait '"$INSTDIR\make" clean-all'
 
   DetailPrint "Running make build"
-  ExecWait '"$2\make" build'
+  ExecWait '"$INSTDIR\make" build'
 
   DetailPrint "Compiling example model"
-  ExecWait '"$2\make" -j2 build examples/bernoulli/bernoulli'
+  ExecWait '"$INSTDIR\make" -j2 build examples/bernoulli/bernoulli'
 
   ; Create a shortcut in the Start menu
   CreateDirectory $SMPROGRAMS\CmdStan
