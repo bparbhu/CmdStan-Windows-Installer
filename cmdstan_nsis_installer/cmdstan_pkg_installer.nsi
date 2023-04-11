@@ -5,97 +5,81 @@ SetCompressor lzma
 ManifestSupportedOS Win10
 Name	"Cmdstan windows 10 installer ${VERSION}"
 OutFile	Cmdstan-Installer-${VERSION}.exe
-InstallDir $DESKTOP
+InstallDir $PROGRAMFILES\CmdStan
 RequestExecutionLevel User
 ShowInstDetails show
 ShowUninstDetails show
-!ifndef PSEXEC_INCLUDED
-!define PSEXEC_INCLUDED
 
 
-
-# start prerequisites section
-
-Section -Prerequisites "Install Prerequisites needed for Cmdstan"
-	SetOutPath $INSTDIR\\Prereqresites
-		
-	MessageBox MB_YESNO "Install the latest version of MSYS2?" /SD IDYES IDNO endmsys2Setup
-		File "Prereqresites\msys2-x86_64-20201109.exe"
-		ExecWait "$INSTDIR\Prereqresites\msys2-x86_64-20201109.exe"
-		ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File powershell_scripts\msys2_setup.ps1 -FFFeatureOff"
-		Goto endmsys2Setup
-	endmsys2Setup:		
-
-SectionEnd
-
-;Target x86-unicode
-;Target x86-ansi
-
-!AddPluginDir /x86-unicode   "NScurl-1.2021.2.14\x86-unicode"
-!AddPluginDir /x86-ansi      "NScurl-1.2021.2.14\x86-ansi"
-;!AddPluginDir /unicode "untgz/unicode"
+; CmdStan Installer
 
 !include "MUI2.nsh"
-!insertmacro MUI_PAGE_WELCOME
+
+; General settings
+Outfile "CmdStanInstaller.exe"
+
+
+
+; Default installation page
+!insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 
+; Default uninstallation page
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+; Set languages
 !insertmacro MUI_LANGUAGE "English"
 
-Name NScurl-Test
-ShowInstDetails show
+Section "CmdStan" SecCmdStan
 
-Section -Download
-  
-  DetailPrint 'Downloading CmdStan...'
-  NScurl::http get "https://github.com/stan-dev/cmdstan/releases/download/v2.26.1/cmdstan-2.26.1.tar.gz" "$TEMP\cmdstan-2.26.1.tar.gz" /CANCEL /INSIST /Zone.Identifier /END
-  Pop $0
-  DetailPrint "Status: $0"
+  SetOutPath $INSTDIR
+
+  ; Extract MinGW-w64
+  File /r "path\to\mingw-w64\*.*"
+
+  ; Set environment variables for MinGW-w64
+  StrCpy $2 $INSTDIR\mingw-w64\bin
+  System::Call 'Kernel32::SetEnvironmentVariable(t "PATH", t "$2")'
+
+  ; Download and extract CmdStan release from GitHub
+  StrCpy $0 "https://github.com/stan-dev/cmdstan/releases/download/v2.31.0"
+  StrCpy $1 "cmdstan-2.31.0.tar.gz"
+  NSISdl::download /TIMEOUT=30000 "$0$1" "$TEMP\$1"
+  Pop $R0
+  DetailPrint "Download status: $R0"
+  untgz::extract "-d$INSTDIR" "$TEMP\$1"
+  Pop $R1
+  DetailPrint "Extraction status: $R1"
+
+  ; Navigate to the extracted CmdStan directory
+  FindFirst $R2 $R3 "$INSTDIR\cmdstan-*"
+  StrCpy $INSTDIR "$INSTDIR\$R3"
+  SetOutPath $INSTDIR
+
+  ; Run make commands
+  DetailPrint "Running make clean-all"
+  ExecWait '"$2\make" clean-all'
+
+  DetailPrint "Running make build"
+  ExecWait '"$2\make" build'
+
+  DetailPrint "Compiling example model"
+  ExecWait '"$2\make" -j2 build examples/bernoulli/bernoulli'
+
+  ; Create a shortcut in the Start menu
+  CreateDirectory $SMPROGRAMS\CmdStan
+  CreateShortCut "$SMPROGRAMS\CmdStan\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 
 SectionEnd
 
-Section close
-SetAutoClose true
+Section "Uninstall"
 
-Section -Installation "Powershell & MSYS2 Cmdstan installation process"
-		
-	# set the installation directory as the destination for the following actions
-	SetOutPath $INSTDIR
-	untgz::extract "-x" "-f" "$INSTDIR" "$TEMP\cmdstan-2.26.1.tar.gz"
-	StrCmp $R0 "success" +4
-		DetailPrint "  Failed to extract ${DICT_FILENAME}"
-		MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "  Failed to extract $cmdstan-2.26.1"
-		Abort
-	 
-	; Delete temporary files
-	Delete "$TEMP\$cmdstan-2.26.1.tar.gz"
+  ; Remove the Start menu shortcut
+  Delete "$SMPROGRAMS\CmdStan\Uninstall.lnk"
+  RMDir "$SMPROGRAMS\CmdStan"
 
-	!cd $INSTDIR\cmdstan-2.26.1
+  ; Remove installed files and directories
+  RMDir /r "$INSTDIR"
 
-	ExecWait "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File powershell_scripts\cmdstan_install.ps1 -FFFeatureOff"
-
-	# create the uninstaller
-	WriteUninstaller "$INSTDIR\uninstall.exe"
-
-	# create a shortcut named "new shortcut" in the start menu programs directory
-	# point the new shortcut at the program uninstaller
-	CreateShortcut "$SMPROGRAMS\new shortcut.lnk" "$INSTDIR\uninstall.exe"
-	
 SectionEnd
-SetAutoClose True
-
-!echo "Cmdstan has been properly installed!"
-
-# uninstaller section
-Section -Uninstall
- 
-    # first, delete the uninstaller
-    Delete "$INSTDIR\uninstall.exe"
- 
-    # second, remove the link from the start menu
-    Delete "$SMPROGRAMS\new shortcut.lnk"
- 
-    RMDir $INSTDIR
-
-# uninstaller section end
-SectionEnd
-SetAutoClose True
