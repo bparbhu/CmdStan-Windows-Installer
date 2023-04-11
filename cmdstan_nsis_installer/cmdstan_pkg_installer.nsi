@@ -1,10 +1,10 @@
-!define VERSION "1.0"
+!define VERSION "0.1"
 !define PRODUCT_NAME "Cmdstan Installer"
 !define PRODUCT_PUBLISHER "Brian Parbhu"
 SetCompressor lzma
 ManifestSupportedOS Win10
 Name	"Cmdstan windows 10 installer ${VERSION}"
-OutFile	Cmdstan-Installer-${VERSION}.exe
+OutFile	CmdStan-Installer-${VERSION}.exe
 InstallDir $PROGRAMFILES\CmdStan
 RequestExecutionLevel User
 ShowInstDetails show
@@ -14,6 +14,8 @@ ShowUninstDetails show
 ; CmdStan Installer
 
 !include "MUI2.nsh"
+
+
 
 ; General settings
 Outfile "CmdStanInstaller.exe"
@@ -31,6 +33,7 @@ Outfile "CmdStanInstaller.exe"
 ; Set languages
 !insertmacro MUI_LANGUAGE "English"
 
+
 Section "CmdStan" SecCmdStan
 
   SetOutPath $INSTDIR
@@ -38,12 +41,21 @@ Section "CmdStan" SecCmdStan
   ; Download and extract CmdStan release from GitHub
   StrCpy $0 "https://github.com/stan-dev/cmdstan/releases/download/v2.31.0"
   StrCpy $1 "cmdstan-2.31.0.tar.gz"
-  NSISdl::download /TIMEOUT=30000 "$0$1" "$TEMP\$1"
-  Pop $R0
-  DetailPrint "Download status: $R0"
-  untgz::extract "-d$INSTDIR" "$TEMP\$1"
-  Pop $R1
-  DetailPrint "Extraction status: $R1"
+  StrCpy $R0 "0"
+  StrCpy $R1 "3" ; Maximum number of retries
+  loop:
+    NSISdl::download /TIMEOUT=30000 "$0$1" "$TEMP\$1"
+    Pop $R0
+    DetailPrint "Download status: $R0"
+    IntOp $R1 $R1 - 1
+    StrCmp $R0 "success" success
+    StrCmp $R1 "0" end loop
+  success:
+  end:
+
+  ; Include 7za.exe in your installer
+  File "7za.exe"
+  ExecWait '"$INSTDIR\7za.exe" x "$TEMP\$1" -so | "$INSTDIR\7za.exe" x -si -ttar -o"$INSTDIR"'
 
   ; Navigate to the extracted CmdStan directory
   FindFirst $R2 $R3 "$INSTDIR\cmdstan-*"
