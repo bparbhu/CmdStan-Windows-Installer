@@ -22,36 +22,56 @@ Outfile "CmdStanInstaller.exe"
 
 
 
-; Default installation page
+; Stan logo
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "stan_logo.bmp"
+!define MUI_HEADERIMAGE_RIGHT
+
+; Default installation pages
+!insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 
-; Default uninstallation page
+; Default uninstallation pages
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
 ; Set languages
 !insertmacro MUI_LANGUAGE "English"
 
-
 Section "CmdStan" SecCmdStan
 
   SetOutPath $INSTDIR
 
-  ; Download and extract CmdStan release from GitHub
-  StrCpy $0 "https://github.com/stan-dev/cmdstan/releases/download/v2.31.0"
-  StrCpy $1 "cmdstan-2.31.0.tar.gz"
-  StrCpy $R0 "0"
-  StrCpy $R1 "3" ; Maximum number of retries
+  ; Get the latest CmdStan release version number
+  StrCpy $0 "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
+  StrCpy $1 "$TEMP\latest_release.json"
+  NSISdl::download /TIMEOUT=30000 "$0" "$1"
+  Pop $R0
+  DetailPrint "Download status: $R0"
+  FileRead $1 $R1
+
+  ; Extract version number from JSON
+  StrCpy $R2 "tag_name"
+  ClearErrors
+  StrCpy $R3 $R1 -1
   loop:
-    NSISdl::download /TIMEOUT=30000 "$0$1" "$TEMP\$1"
-    Pop $R0
-    DetailPrint "Download status: $R0"
-    IntOp $R1 $R1 - 1
-    StrCmp $R0 "success" success
-    StrCmp $R1 "0" end loop
-  success:
-  end:
+    IntOp $R3 $R3 + 1
+    StrCpy $R4 $R1 1 $R3
+    StrCmp $R4 $R2 loop
+    IntOp $R3 $R3 + 9
+    StrCpy $R5 $R1 -1 $R3
+    StrCmp $R5 '"' "" loop
+    StrCpy $R3 $R5
+
+  DetailPrint "Latest CmdStan version: $R3"
+
+  ; Download and extract CmdStan release from GitHub
+  StrCpy $0 "https://github.com/stan-dev/cmdstan/releases/download/$R3/"
+  StrCpy $1 "cmdstan-$R3.tar.gz"
+  NSISdl::download /TIMEOUT=30000 "$0$1" "$TEMP\$1"
+  Pop $R0
+  DetailPrint "Download status: $R0"
 
   ; Include 7za.exe in your installer
   File "7za.exe"
@@ -70,7 +90,7 @@ Section "CmdStan" SecCmdStan
   ExecWait '"$INSTDIR\make" build'
 
   DetailPrint "Compiling example model"
-  ExecWait '"$INSTDIR\make" -j2 build examples/bernoulli/bernoulli'
+  ExecWait '"$INSTDIR\make" -j2 build examples\bernoulli\bernoulli'
 
   ; Create a shortcut in the Start menu
   CreateDirectory $SMPROGRAMS\CmdStan
@@ -81,10 +101,4 @@ SectionEnd
 Section "Uninstall"
 
   ; Remove the Start menu shortcut
-  Delete "$SMPROGRAMS\CmdStan\Uninstall.lnk"
-  RMDir "$SMPROGRAMS\CmdStan"
-
-  ; Remove installed files and directories
-  RMDir /r "$INSTDIR"
-
-SectionEnd
+  Delete "$S
