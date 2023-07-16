@@ -101,4 +101,9 @@ SectionEnd
 Section "Uninstall"
 
   ; Remove the Start menu shortcut
-  Delete "$S
+  Delete "$SMPROGRAMS\CmdStan\Uninstall.lnk"
+
+  ; Here you can add other uninstall commands
+  ; like removing the CmdStan directory etc.
+
+SectionEnd
