@@ -46,7 +46,7 @@ Section "CmdStan" SecCmdStan
   ; Get the latest CmdStan release version number
   StrCpy $0 "https://api.github.com/repos/stan-dev/cmdstan/releases/latest"
   StrCpy $1 "$TEMP\latest_release.json"
-  NSISdl::download /TIMEOUT=120000 "$0" "$1"
+  NSISdl::download /TIMEOUT=380000 "$0" "$1"
   Pop $R0
   DetailPrint "Download status: $R0"
   FileRead $1 $R1
